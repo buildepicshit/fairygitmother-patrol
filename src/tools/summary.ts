@@ -1,19 +1,42 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import type { PatrolConfig } from "../config.js";
 import { resolveToken } from "../config.js";
 import type { PatrolDb } from "../store/db.js";
 import { agents, tasks } from "../store/schema.js";
+
+/**
+ * Parse a human-readable duration string into milliseconds.
+ * Supports: "24 hours", "7 days", "1 hour", "30 minutes", "2 days"
+ */
+function parseSinceDuration(since: string): number {
+	const match = since.match(/^(\d+)\s*(hour|hours|day|days|minute|minutes|min|mins|h|d|m)$/i);
+	if (!match) return 24 * 60 * 60 * 1000; // default 24 hours
+
+	const value = Number.parseInt(match[1], 10);
+	const unit = match[2].toLowerCase();
+
+	if (unit.startsWith("h")) return value * 60 * 60 * 1000;
+	if (unit.startsWith("d")) return value * 24 * 60 * 60 * 1000;
+	if (unit.startsWith("m")) return value * 60 * 1000;
+	return 24 * 60 * 60 * 1000;
+}
 
 export async function handleSummary(
 	db: PatrolDb,
 	config: PatrolConfig,
 	args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
-	// TODO: implement time-based filtering using args.since (e.g. "24 hours", "7 days")
-	// For now, returns the most recent 100 tasks regardless of time window.
+	const since = (args.since as string) || "24 hours";
+	const sinceMs = parseSinceDuration(since);
+	const sinceDate = new Date(Date.now() - sinceMs).toISOString();
 
-	// Gather stats from local DB
-	const allTasks = await db.select().from(tasks).orderBy(desc(tasks.updatedAt)).limit(100);
+	// Gather stats from local DB — filtered by time window
+	const allTasks = await db
+		.select()
+		.from(tasks)
+		.where(gte(tasks.updatedAt, sinceDate))
+		.orderBy(desc(tasks.updatedAt))
+		.limit(100);
 	const agentList = await db.select().from(agents);
 
 	// Categorize
