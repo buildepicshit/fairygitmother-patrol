@@ -4,10 +4,12 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import type { PatrolConfig } from "./config.js";
 import type { PatrolDb } from "./store/db.js";
 import { handleConfigure } from "./tools/configure.js";
+import { handleFinding } from "./tools/finding.js";
 import { handleHistory } from "./tools/history.js";
 import { handleNextTask } from "./tools/next-task.js";
 import { handleReport } from "./tools/report.js";
 import { handleStatus } from "./tools/status.js";
+import { handleSummary } from "./tools/summary.js";
 import { handleTrawl } from "./tools/trawl.js";
 
 const TOOL_DEFINITIONS = [
@@ -105,6 +107,47 @@ const TOOL_DEFINITIONS = [
 		},
 	},
 	{
+		name: "patrol_finding",
+		description:
+			"Report a finding that doesn't have an auto-fix — creates a GitHub Issue tagged 'patrol'. Use this for code drift, architecture violations, security concerns, or quality issues that need human decision.",
+		inputSchema: {
+			type: "object" as const,
+			properties: {
+				repo: { type: "string", description: 'The repo — e.g. "owner/repo".' },
+				title: { type: "string", description: "Short description of the finding." },
+				body: {
+					type: "string",
+					description: "Detailed description: what you found, where, why it matters, and what you recommend.",
+				},
+				agentId: { type: "string", description: "Your agent identifier." },
+				taskType: {
+					type: "string",
+					description: "What type of patrol found this (code_drift, standards, security, etc.).",
+				},
+				severity: {
+					type: "string",
+					enum: ["info", "warning", "critical"],
+					description: "How urgent is this finding.",
+				},
+			},
+			required: ["repo", "title", "body", "agentId"],
+		},
+	},
+	{
+		name: "patrol_summary",
+		description:
+			"Get a consolidated summary of patrol activity: proposed PRs, open findings, queue depth, agent stats. Shows what happened across all monitored repos.",
+		inputSchema: {
+			type: "object" as const,
+			properties: {
+				since: {
+					type: "string",
+					description: 'Time period — e.g. "24 hours", "7 days". Default: "24 hours".',
+				},
+			},
+		},
+	},
+	{
 		name: "patrol_history",
 		description: "View completed patrol tasks with full provenance — who solved, who reviewed, PR links.",
 		inputSchema: {
@@ -140,6 +183,8 @@ export function createPatrolServer(
 		patrol_status: (args) => handleStatus(db, config, args),
 		patrol_configure: (args) => handleConfigure(db, config, args),
 		patrol_trawl: (args) => handleTrawl(db, config, args),
+		patrol_finding: (args) => handleFinding(db, config, args),
+		patrol_summary: (args) => handleSummary(db, config, args),
 		patrol_history: (args) => handleHistory(db, config, args),
 	};
 

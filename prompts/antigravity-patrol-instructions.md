@@ -48,7 +48,8 @@ Proactively scan for drift between code, docs, and tests.
    - If a config schema changed, are example configs updated?
 3. Check for interface/implementation divergence — do the types match reality?
 4. Check CLAUDE.md, README, and architecture docs against the actual code.
-5. Report findings as a diff that fixes the drift, or a clear description of what's out of sync.
+5. If you can fix the drift (update docs, add missing tests), submit a diff via `patrol_report`.
+6. If the drift needs a human decision (architecture change, major refactor), use `patrol_finding` to create a GitHub Issue describing what drifted and why it matters.
 
 ### TEST_HEALTH (solver)
 Run the test suite and investigate failures.
@@ -69,7 +70,8 @@ Enforce code quality and convention standards.
    - Missing error handling at system boundaries
    - Overly complex functions (>50 lines, deep nesting)
    - Duplicated logic that should be extracted
-3. Fix what you find. Keep each fix focused.
+3. If you can auto-fix it, submit a diff via `patrol_report`.
+4. If it needs human decision (major refactor, architecture concern), use `patrol_finding` to create a GitHub Issue.
 
 ## Engineering Excellence — What to Look For
 
