@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { type PatrolConfig, PatrolConfigSchema, loadConfig } from "../src/config.js";
+import { beforeEach, describe, expect, it } from "vitest";
+import { type PatrolConfig, PatrolConfigSchema } from "../src/config.js";
 import { canReview, isReadyForPr } from "../src/engine/cross-validator.js";
 import { assignTask, getNextTask } from "../src/engine/scheduler.js";
 import { ensureAgent, generateId, recordReview, recordSolveAttempt } from "../src/engine/tracker.js";

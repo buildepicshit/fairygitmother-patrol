@@ -7,66 +7,36 @@ interface PrResult {
 
 /**
  * Create a PR for an approved patrol task.
- * Applies the diff as a commit on a new branch, then opens a PR.
+ *
+ * NOTE: Full diff-to-commit via Git Trees/Blobs API is not yet implemented.
+ * This function will throw until that's built. The approved task stays in
+ * "approved" status and the diff is preserved for manual application.
  */
 export async function createPullRequest(
-	owner: string,
-	repo: string,
-	opts: {
+	_owner: string,
+	_repo: string,
+	_opts: {
 		title: string;
 		body: string;
 		branch: string;
 		diff: string;
 		baseBranch?: string;
 	},
-	config: PatrolConfig,
+	_config: PatrolConfig,
 ): Promise<PrResult> {
-	const token = resolveToken(config.github.token);
-	const base = opts.baseBranch || "main";
-	const headers = {
-		Accept: "application/vnd.github.v3+json",
-		Authorization: `Bearer ${token}`,
-		"User-Agent": "FairygitMother-Patrol",
-		"Content-Type": "application/json",
-	};
-
-	// 1. Get the SHA of the base branch
-	const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${base}`, {
-		headers,
-	});
-	if (!refRes.ok) throw new Error(`Failed to get base branch: ${refRes.status}`);
-	const refData = (await refRes.json()) as { object: { sha: string } };
-	const baseSha = refData.object.sha;
-
-	// 2. Create branch
-	const createRefRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs`, {
-		method: "POST",
-		headers,
-		body: JSON.stringify({ ref: `refs/heads/${opts.branch}`, sha: baseSha }),
-	});
-	if (!createRefRes.ok) {
-		const err = await createRefRes.text();
-		throw new Error(`Failed to create branch: ${createRefRes.status} ${err}`);
-	}
-
-	// 3. Create PR
-	const prRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
-		method: "POST",
-		headers,
-		body: JSON.stringify({
-			title: opts.title,
-			body: opts.body,
-			head: opts.branch,
-			base,
-		}),
-	});
-	if (!prRes.ok) {
-		const err = await prRes.text();
-		throw new Error(`Failed to create PR: ${prRes.status} ${err}`);
-	}
-
-	const prData = (await prRes.json()) as { html_url: string; number: number };
-	return { url: prData.html_url, number: prData.number };
+	// TODO: Implement diff-to-commit via GitHub Git Trees/Blobs API.
+	// See MoltForge's submitter.ts for reference implementation:
+	//   1. Get base tree SHA from HEAD
+	//   2. Parse unified diff into per-file changes
+	//   3. For each file: fetch original, apply patch, create blob
+	//   4. Create tree from base tree + new blobs
+	//   5. Create commit referencing new tree
+	//   6. Create branch pointing to commit
+	//   7. Open PR
+	throw new Error(
+		"PR auto-creation not yet implemented — diff-to-commit via Git Trees/Blobs API is pending. " +
+			"The approved task and diff are preserved. Apply the diff manually or wait for this feature.",
+	);
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { PatrolConfig } from "../config.js";
 import { resolveToken } from "../config.js";
 import { trawlRepo } from "../engine/trawler.js";
+import { parseRepo } from "../github/issues.js";
 import type { PatrolDb } from "../store/db.js";
 
 export async function handleTrawl(
@@ -8,7 +9,7 @@ export async function handleTrawl(
 	config: PatrolConfig,
 	args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
-	const repo = args.repo as string | undefined;
+	const repoArg = args.repo as string | undefined;
 
 	let token: string;
 	try {
@@ -19,7 +20,18 @@ export async function handleTrawl(
 	}
 
 	// Trawl specific repo or all configured repos
-	const repos = repo ? [{ owner: repo.split("/")[0], repo: repo.split("/")[1] }] : config.repos;
+	let repos: Array<{ owner: string; repo: string }>;
+	if (repoArg) {
+		try {
+			const parsed = parseRepo(repoArg);
+			repos = [parsed];
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			return { content: [{ type: "text", text: `Error: ${message}` }] };
+		}
+	} else {
+		repos = config.repos;
+	}
 
 	if (repos.length === 0) {
 		return {

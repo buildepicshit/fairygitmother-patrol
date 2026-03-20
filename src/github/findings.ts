@@ -52,6 +52,7 @@ export async function createFinding(
 	const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
 		method: "POST",
 		headers,
+		signal: AbortSignal.timeout(10000),
 		body: JSON.stringify({
 			title: `[Patrol] ${opts.title}`,
 			body,
@@ -81,17 +82,24 @@ async function ensureLabel(owner: string, repo: string, token: string): Promise<
 
 	const checkRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/labels/patrol`, {
 		headers,
+		signal: AbortSignal.timeout(5000),
 	});
 
 	if (checkRes.status === 404) {
-		await fetch(`https://api.github.com/repos/${owner}/${repo}/labels`, {
+		const createRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/labels`, {
 			method: "POST",
 			headers,
+			signal: AbortSignal.timeout(5000),
 			body: JSON.stringify({
 				name: "patrol",
 				color: "2ecc71",
 				description: "Created by FairygitMother Patrol — automated codebase guardian",
 			}),
 		});
+		// Non-fatal: if label creation fails (permissions, etc.), issue creation
+		// will still work — the labels just won't be applied.
+		if (!createRes.ok) {
+			process.stderr.write(`[patrol] Warning: failed to create 'patrol' label: ${createRes.status}\n`);
+		}
 	}
 }

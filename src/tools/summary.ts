@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { PatrolConfig } from "../config.js";
 import { resolveToken } from "../config.js";
 import type { PatrolDb } from "../store/db.js";
@@ -9,7 +9,8 @@ export async function handleSummary(
 	config: PatrolConfig,
 	args: Record<string, unknown>,
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
-	const since = (args.since as string) || "24 hours";
+	// TODO: implement time-based filtering using args.since (e.g. "24 hours", "7 days")
+	// For now, returns the most recent 100 tasks regardless of time window.
 
 	// Gather stats from local DB
 	const allTasks = await db.select().from(tasks).orderBy(desc(tasks.updatedAt)).limit(100);

@@ -49,15 +49,17 @@ export async function recordSolveAttempt(
 		})
 		.where(eq(tasks.id, taskId));
 
-	// Update agent stats
-	await db
-		.update(agents)
-		.set({
-			lastSeen: now,
-			tasksCompleted:
-				(await db.select().from(agents).where(eq(agents.id, agentId)))[0]?.tasksCompleted + 1 || 1,
-		})
-		.where(eq(agents.id, agentId));
+	// Update agent stats (read-then-write to avoid race on counter)
+	const agent = (await db.select().from(agents).where(eq(agents.id, agentId)).limit(1))[0];
+	if (agent) {
+		await db
+			.update(agents)
+			.set({
+				lastSeen: now,
+				tasksCompleted: agent.tasksCompleted + 1,
+			})
+			.where(eq(agents.id, agentId));
+	}
 }
 
 /**

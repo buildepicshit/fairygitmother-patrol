@@ -57,7 +57,7 @@ async function getNextReviewTask(db: PatrolDb, agentId: string): Promise<Schedul
 	const candidates = await db
 		.select()
 		.from(tasks)
-		.where(and(eq(tasks.status, "review_pending")))
+		.where(eq(tasks.status, "review_pending"))
 		.orderBy(asc(tasks.priority), asc(tasks.createdAt))
 		.limit(20);
 

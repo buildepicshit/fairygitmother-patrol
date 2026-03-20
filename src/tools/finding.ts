@@ -1,5 +1,4 @@
 import type { PatrolConfig } from "../config.js";
-import { resolveToken } from "../config.js";
 import { createFinding } from "../github/findings.js";
 import { parseRepo } from "../github/issues.js";
 import type { PatrolDb } from "../store/db.js";
