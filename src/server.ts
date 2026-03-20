@@ -8,6 +8,7 @@ import { handleHistory } from "./tools/history.js";
 import { handleNextTask } from "./tools/next-task.js";
 import { handleReport } from "./tools/report.js";
 import { handleStatus } from "./tools/status.js";
+import { handleTrawl } from "./tools/trawl.js";
 
 const TOOL_DEFINITIONS = [
 	{
@@ -90,6 +91,20 @@ const TOOL_DEFINITIONS = [
 		},
 	},
 	{
+		name: "patrol_trawl",
+		description:
+			"Scan configured repos for new issues and queue them as patrol tasks. Optionally pass a specific repo.",
+		inputSchema: {
+			type: "object" as const,
+			properties: {
+				repo: {
+					type: "string",
+					description: 'Repo to trawl — e.g. "owner/repo". Omit to trawl all configured repos.',
+				},
+			},
+		},
+	},
+	{
 		name: "patrol_history",
 		description: "View completed patrol tasks with full provenance — who solved, who reviewed, PR links.",
 		inputSchema: {
@@ -124,6 +139,7 @@ export function createPatrolServer(
 		patrol_report: (args) => handleReport(db, config, args),
 		patrol_status: (args) => handleStatus(db, config, args),
 		patrol_configure: (args) => handleConfigure(db, config, args),
+		patrol_trawl: (args) => handleTrawl(db, config, args),
 		patrol_history: (args) => handleHistory(db, config, args),
 	};
 
